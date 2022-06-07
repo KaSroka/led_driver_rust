@@ -4,7 +4,7 @@ use tokio::sync::watch;
 use tokio::task;
 
 use crate::color::Color;
-use crate::led_effects::LedEffect;
+use crate::led_effect::LedEffect;
 
 pub struct LedEffectProcessor {
     handle: task::JoinHandle<()>,

@@ -1,11 +1,11 @@
 mod color;
 mod led_effect_processor;
-mod led_effects;
+mod led_effect;
 
 use color::Color;
 use colored::Colorize;
 use led_effect_processor::LedEffectProcessor;
-use led_effects::{LedEffect, InfinityEffect, BlinkEffect, PulseEffect};
+use led_effect::{LedEffect, InfinityEffect, BlinkEffect, PulseEffect};
 use tokio::sync::watch;
 use tokio::time;
 
