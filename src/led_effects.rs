@@ -4,7 +4,8 @@ use async_trait::async_trait;
 use tokio::sync::watch;
 use tokio::time;
 
-use crate::led_effect_processor::{InfinityEffect, LedEffect, Color};
+use crate::led_effect_processor::{InfinityEffect, LedEffect};
+use crate::color::Color;
 
 pub struct BlinkEffect {
     on_time: time::Duration,
