@@ -1,11 +1,11 @@
+mod color;
 mod led_effect_processor;
 mod led_effects;
-mod color;
 
-use colored::Colorize;
-use led_effect_processor::{InfinityEffect, LedEffect, LedEffectProcessor};
-use led_effects::{BlinkEffect, PulseEffect};
 use color::Color;
+use colored::Colorize;
+use led_effect_processor::LedEffectProcessor;
+use led_effects::{LedEffect, InfinityEffect, BlinkEffect, PulseEffect};
 use tokio::sync::watch;
 use tokio::time;
 
@@ -51,8 +51,6 @@ async fn main() {
     .run_in(&mut proc);
 
     time::sleep(time::Duration::from_secs(1)).await;
-
-
 
     PulseEffect::new(
         time::Duration::from_millis(1000),

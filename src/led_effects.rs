@@ -4,8 +4,48 @@ use async_trait::async_trait;
 use tokio::sync::watch;
 use tokio::time;
 
-use crate::led_effect_processor::{InfinityEffect, LedEffect};
 use crate::color::Color;
+use crate::led_effect_processor::LedEffectProcessor;
+
+#[async_trait]
+pub trait LedEffect: Sync + Send {
+    async fn run(&self, out: Arc<watch::Sender<Color>>);
+
+    fn run_in(self: Box<Self>, processor: &mut LedEffectProcessor)
+    where
+        Self: 'static + Sized,
+    {
+        processor.start_effect(self as Box<dyn LedEffect>);
+    }
+}
+
+pub trait InfinityEffect
+where
+    Self: LedEffect + Sized,
+{
+    fn as_infinity(self: Box<Self>) -> Box<InfinityLedEffect<Self>> {
+        Box::new(InfinityLedEffect { effect: self })
+    }
+}
+
+pub struct InfinityLedEffect<T>
+where
+    T: LedEffect + Sync,
+{
+    effect: Box<T>,
+}
+
+#[async_trait]
+impl<T> LedEffect for InfinityLedEffect<T>
+where
+    T: LedEffect + Sync + Send,
+{
+    async fn run(&self, out: Arc<watch::Sender<Color>>) {
+        loop {
+            self.effect.run(out.clone()).await;
+        }
+    }
+}
 
 pub struct BlinkEffect {
     on_time: time::Duration,
@@ -15,16 +55,22 @@ pub struct BlinkEffect {
 
 impl BlinkEffect {
     pub fn new(on_time: time::Duration, off_time: time::Duration, color: Color) -> Box<Self> {
-        Box::new(Self { on_time, off_time, color })
+        Box::new(Self {
+            on_time,
+            off_time,
+            color,
+        })
     }
 }
 
 #[async_trait]
 impl LedEffect for BlinkEffect {
     async fn run(&self, out: Arc<watch::Sender<Color>>) {
-        out.send(self.color.with_intensity(1.0)).expect("Output channel closed");
+        out.send(self.color.with_intensity(1.0))
+            .expect("Output channel closed");
         time::sleep(self.on_time).await;
-        out.send(self.color.with_intensity(0.0)).expect("Output channel closed");
+        out.send(self.color.with_intensity(0.0))
+            .expect("Output channel closed");
         time::sleep(self.off_time).await;
     }
 }
@@ -69,7 +115,8 @@ impl LedEffect for PulseEffect {
             let val = (i as f32 * self.refresh_interval.as_secs_f32() / self.on_time.as_secs_f32())
                 .clamp(0.0, 1.0);
 
-            out.send(self.color.with_intensity(val)).expect("Output channel closed");
+            out.send(self.color.with_intensity(val))
+                .expect("Output channel closed");
 
             time::sleep(self.refresh_interval).await;
         }
@@ -79,7 +126,8 @@ impl LedEffect for PulseEffect {
                 - i as f32 * self.refresh_interval.as_secs_f32() / self.off_time.as_secs_f32())
             .clamp(0.0, 1.0);
 
-            out.send(self.color.with_intensity(val)).expect("Output channel closed");
+            out.send(self.color.with_intensity(val))
+                .expect("Output channel closed");
 
             time::sleep(self.refresh_interval).await;
         }
